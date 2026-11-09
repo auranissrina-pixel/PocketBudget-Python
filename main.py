@@ -54,6 +54,7 @@ def tampilkan_riwayat(data):
     print("="*40)
 
 def main():
+    # --- FUNGSI UTAMA DAN NAVIGASI MENU ---
     data = muat_data()
     while True:
         print("\n=== APLIKASI POCKETBUDGET ===")
