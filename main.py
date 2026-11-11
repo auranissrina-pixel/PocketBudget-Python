@@ -13,33 +13,43 @@ def simpan_data(data):
     with open(FILE_DATA, "w") as file:
         json.dump(data, file, indent=4)
 
+
+SALDO_MINIMAL_URGENT = 100000  # Batas dana darurat (Rp 100.000)
+
 def tambah_transaksi(data, jenis):
     try:
-        keterangan = input("Masukkan keterangan: ")
         jumlah = float(input("Masukkan jumlah (Rp): "))
         if jumlah <= 0:
             print("Jumlah harus lebih dari 0!")
             return
 
-        if jenis == "pengeluaran" and jumlah > data["saldo"]:
-            print("Saldo tidak mencukupi!")
-            return
-
         if jenis == "pemasukan":
             data["saldo"] += jumlah
-        else:
-            data["saldo"] -= jumlah
+            data["riwayat"].append({"jenis": "Pemasukan", "jumlah": jumlah})
+            print(f"Pemasukan sebesar Rp {jumlah:,.0f} berhasil ditambahkan.")
 
-        transaksi = {
-            "jenis": jenis.capitalize(),
-            "keterangan": keterangan,
-            "jumlah": jumlah
-        }
-        data["transaksi"].append(transaksi)
+        elif jenis == "pengeluaran":
+            saldo_setelah_pengeluaran = data["saldo"] - jumlah
+
+            # 1. CEK JIKA PENGELUARAN MEMBUAT SALDO DI BAWAH BATAS URGENT
+            if saldo_setelah_pengeluaran < SALDO_MINIMAL_URGENT:
+                print(f"\n❌ Transaksi Ditolak!")
+                print(f"Sisa saldo Anda akan menjadi Rp {saldo_setelah_pengeluaran:,.0f}.")
+                print(f"Minimal saldo Rp {SALDO_MINIMAL_URGENT:,.0f} harus disisa untuk kebutuhan URGENT!")
+            
+            # 2. CEK JIKA SALDO PAS MENYENTUH BATAS URGENT
+            elif saldo_setelah_pengeluaran == SALDO_MINIMAL_URGENT:
+                print(f"\n⚠️  NOTIFIKASI PERINGATAN:")
+                print(f"Saldo Anda saat ini pas Rp {SALDO_MINIMAL_URGENT:,.0f} (Batas Dana Urgent)!")
+                print(f"Anda tidak bisa melakukan pengeluaran lagi sampai ada pemasukan baru.")
+
+            data["saldo"] = saldo_setelah_pengeluaran
+            data["riwayat"].append({"jenis": "Pengeluaran", "jumlah": jumlah})
+            print(f"Pengeluaran sebesar Rp {jumlah:,.0f} berhasil dicatat.")
+
         simpan_data(data)
-        print(f"\n[+] Berhasil menambahkan {jenis}: Rp{jumlah:,.2f}")
     except ValueError:
-        print("Input jumlah harus berupa angka!")
+        print("Input tidak valid! Harap masukkan angka.")
 
 def tampilkan_riwayat(data):
     print("\n" + "="*40)
